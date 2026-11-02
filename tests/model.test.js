@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {seed,clashes,intersection,area,validPolygon,validateRows,parseCSV} from '../src/model.js';
+test('sample projects clash for eight inclusive days',()=>{const c=clashes(seed());assert.equal(c.length,1);assert.equal(c[0].days,8);assert.equal(c[0].start,'2027-02-12');assert.equal(c[0].finish,'2027-02-19')});
+test('rescheduling removes the spatial/time clash',()=>{const m=seed();m.activities[1].start='2027-02-20';assert.equal(clashes(m).length,0)});
+test('shared edge and vertex do not clash; containment does',()=>{const square=[[0,0],[10,0],[10,10],[0,10]];assert.equal(intersection(square,[[10,0],[20,0],[20,10],[10,10]]).length,0);assert.equal(intersection(square,[[10,10],[20,10],[20,20],[10,20]]).length,0);assert.equal(intersection(square,[[2,2],[8,2],[8,8],[2,8]]).reduce((s,p)=>s+area(p),0),36)});
+test('concave polygons preserve excluded regions',()=>{const l=[[0,0],[10,0],[10,4],[4,4],[4,10],[0,10]];assert.equal(intersection(l,[[5,5],[9,5],[9,9],[5,9]]).length,0);assert.equal(intersection(l,[[2,2],[8,2],[8,8],[2,8]]).reduce((s,p)=>s+area(p),0),20)});
+test('reject crossed footprints',()=>{assert.equal(validPolygon([[0,0],[10,10],[0,10],[10,0]]),false);assert.equal(validPolygon([[0,0],[10,0],[10,10],[0,10]]),true)});
+test('CSV handles quoted fields, BOM and CRLF',()=>{const rows=parseCSV('\uFEFFactivity_id,name,start,finish,footprint_id\r\nA,"Apron, stage 1",2027-02-01,2027-02-04,FP-001\r\n');assert.equal(validateRows(rows,seed().footprints)[0].name,'Apron, stage 1')});
+test('invalid imports reject unknown footprint, duplicate ID and bad date',()=>{const r={activity_id:'A',name:'Works',start:'2027-02-01',finish:'2027-02-04',footprint_id:'FP-001'};assert.throws(()=>validateRows([{...r,footprint_id:'unknown'}],seed().footprints));assert.throws(()=>validateRows([r,r],seed().footprints));assert.throws(()=>validateRows([{...r,start:'2027-02-30'}],seed().footprints))});

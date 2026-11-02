@@ -1,0 +1,10 @@
+KEYFRAME — BRISBANE AIRPORT DEMO
+
+1. Extract this ZIP folder first.
+2. Double-click OPEN-DEMO.html to open the interactive demo in your browser.
+3. Open demo/Keyframe-Brisbane-Airport-demo.mp4 to watch the walkthrough.
+
+No installation needed for the offline demo. Use CSV for programme imports.
+For Excel (.xlsx) import, follow the full Python server instructions in README.md.
+
+Sample data and an illustrative airport plan only. No live Keyframe connection.
