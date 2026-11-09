@@ -1,16 +1,46 @@
-# Keyframe · Spatial programme concept
+# Keyframe · Spatial programme concepts
 
-Interactive Brisbane Airport demonstration inspired by the supplied Keyframe layout. Illustrative, non-georeferenced airport plan and synthetic project data. No connection to a Keyframe account or live project.
+Westport (Perth/Kwinana) is the default example. Brisbane Airport remains available in the project selector. Both are concept demonstrations, separate from live Keyframe projects.
 
-## Open the demo without installing anything
+## Open the demonstration
 
-Download this branch as a ZIP, extract it, then double-click **OPEN-DEMO.html**. This offline version supports footprint drawing, CSV programme imports, timeline playback and clash checks. To import Excel workbooks, use the full server version below.
+Download the `westport-demo` branch as a ZIP, extract it and double-click **OPEN-DEMO.html**. No installation is needed for drawing footprints, CSV import, playback, clash checking or workspace export. Excel `.xlsx` import uses the Python server described below.
 
-The captioned video is [demo/Keyframe-Brisbane-Airport-demo.mp4](demo/Keyframe-Brisbane-Airport-demo.mp4).
+Westport's satellite layer requests Esri World Imagery for the Kwinana/Cockburn Sound extent. It needs internet access unless imagery has been cached and embedded. If the imagery cannot load, the application explicitly displays a **context diagram**, not a satellite image. The standalone builder embeds `assets/westport-satellite.jpg` when present.
 
-## Run
+## Westport evidence status
 
-Python 3.12+, Node 24 for geometry tests. Openpyxl enables Excel import.
+**Not ready for a sourced client presentation yet.** The cloud proxy currently denies the official Westport/WA Government websites and the imagery provider. Network additions have been saved in the environment configuration but must be applied with **Save draft** in environment settings.
+
+- All seven area envelopes are illustrative locations around Kwinana/Cockburn Sound. They are **not** approved Westport boundaries, surveyed extents, land reservations or confirmed work packages.
+- The nine linked activities form an editable **2027–2039 scenario**, including design/approvals, enabling, marine, terminal, access/corridor, rail and commissioning examples. These dates have **not** been checked against the current Westport delivery programme.
+- Reference links appear under **Basis & sources**. They are labelled as awaiting live verification. Do not describe them as sources for the scenario's detailed dates until the research is completed.
+- Westport's map uses a common Web Mercator (EPSG:3857) extent for raster placement and longitude/latitude-to-canvas conversion. Exports include geographic footprint coordinates. This preserves image/polygon registration; it does not establish the planning accuracy of the illustrative polygons.
+
+Required domains saved in the draft: `westport.wa.gov.au`, `www.westport.wa.gov.au`, `www.wa.gov.au`, `services.arcgisonline.com`. After they are applied, verify the programme's published milestones and preferred project-area maps, replace the scenario assumptions as appropriate, and run:
+
+```sh
+python scripts/cache_westport_imagery.py
+python scripts/build_offline.py
+```
+
+The caching script preserves TLS verification, reads provider attribution, verifies returned image extent/dimensions, and saves attribution, retrieval time and checksum in `assets/westport-imagery.json`. Image acquisition dates vary; imagery is not live. The optional caching helper uses Pillow; the normal application needs only openpyxl.
+
+## Demonstrate
+
+1. Open Westport on 1 June 2033. Seven concept areas and nine activities illustrate marine, terminal and transport coordination. The sample contains deliberate space/time overlaps.
+2. Select **Clashes**, then a result to jump to its first date and highlight the overlap area. A spatial intersection creates a clash only while its activity dates overlap.
+3. Select an area and edit its linked activity dates. Save to recalculate overlaps.
+4. Draw a new area, give it a name and link its ID in an imported CSV/Excel programme.
+5. Play or scrub the multi-year timeline. Playback advances adaptively; activities and map areas update without recreating the slider during dragging.
+6. Export/reopen a workspace or download a clash report. Scenario, image extent and geographic coordinates are preserved in Westport exports.
+7. Switch to Brisbane to view the original airport example. Browser storage and reset are isolated per project example.
+
+The concept uses simple 2D polygons plus calendar time. It does not assess elevations, work-zone buffers, safety clearances, time of day or engineering/design clashes. Shared boundaries alone are not a clash. Detailed dates are inclusive calendar dates. Several activities may link to one area.
+
+## Run the full application
+
+Python 3.12+, Node 24 for tests. Openpyxl enables Excel import.
 
 ```sh
 cd /workspace/Keyframe-Testing
@@ -19,28 +49,19 @@ python -m venv --system-site-packages .venv
 .venv/bin/python server.py
 ```
 
-Open the application on port 3000 in a browser. `PORT` overrides the port. No API keys, databases, build step or npm dependencies are required. Use only in a trusted demo environment: the development server does not implement authentication or production file isolation.
+The development server uses port 3000; `PORT` overrides it. No API keys, database, npm dependencies or application build step are required. Use in a trusted demo environment; this development server does not implement production authentication.
 
-## Demonstrate
+Programme columns: `activity_id,name,start,finish,footprint_id`. Dates must be `YYYY-MM-DD`; footprint IDs must already exist. Imports replace the selected scenario's activity list only after validating every row. Limits: 5 MB per upload, 500 activities, first worksheet for Excel.
 
-1. Start on 15 February 2027. Three activities are active, with one clash between apron works and the service corridor.
-2. Select **Clashes**, then the result to jump to its first day. The hatched map area shows the spatial intersection; dates overlap for eight inclusive days.
-3. Select **Footprints → Taxiway service corridor**. Move its start to 20 February 2027 and save: the clash clears.
-4. Use **Draw footprint**, place at least three vertices, finish, name and save it. The new footprint receives a persistent ID such as `FP-005`.
-5. Use **Link programme** to download the CSV example or import CSV / `.xlsx`. Imports replace the activity list after validating every row; footprints remain. Excel reads the first worksheet, including native Excel dates.
-6. Play or scrub the programme. Inactive footprints fade. Click programme rows to inspect the linked footprint.
-7. Export and reopen a workspace or export the clash report. Reset restores the original sample.
+Workspace edits persist in browser storage. Export uses a versioned **demo JSON format** (`.kfm.json`), not native KFM. Native integration requires Keyframe's documented API/storage contracts.
 
-Programme columns: `activity_id,name,start,finish,footprint_id`. Dates must be `YYYY-MM-DD`; finish dates are inclusive. Footprint IDs must already exist. Several activities may link to one footprint. Workbook uploads are limited to 5 MB and programme imports to 500 activities.
-
-Workspace edits persist in this browser's local storage. Export uses a versioned **demo JSON format** (`.kfm.json`), not Keyframe's native KFM format. A real integration requires Keyframe's documented storage/API contracts and georeferenced model data. Spatial tests use simple 2D polygons plus calendar time (4D planning concept); no elevation, buffers, safety clearances, time-of-day, live synchronization or engineering collision assessment is included. Programme visualization covers 1 February–7 March 2027; clash calculations cover all imported dates. Edge contact alone is not a clash.
-
-## Validate
+## Verification
 
 ```sh
-node tests/model.test.js
+npm test
+npm run build:offline
 ```
 
-Seven substantive tests cover inclusive schedule overlaps, rescheduling, shared edges/vertices, containment, concave geometry, invalid polygons and programme/CSV validation. Browser verification additionally exercises drawing, export/reimport, invalid import rejection, Excel upload, persistence, reset, playback and mobile layout.
+Fifteen model/scenario tests cover polygon intersection, concavity/containment/shared edges, import validation, geographic projection round trips, scenario isolation, multi-year range/ticks and leap-day handling. Browser checks exercise Westport seed data, image-failure fallback, project switching, dates/playback, drawing, geographic export/reimport, CSV and Excel linking, persistence/reset and mobile layout.
 
-The recorded walkthrough and interface screenshot are in `demo/`. The walkthrough uses sample data only.
+Satellite retrieval and current official programme alignment remain **unverified**, separately from those passing application checks.

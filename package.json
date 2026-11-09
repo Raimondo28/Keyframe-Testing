@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "python server.py",
-    "test": "node tests/model.test.js"
+    "test": "node tests/model.test.js && node tests/scenarios.test.js",
+    "build:offline": "python scripts/build_offline.py"
   }
 }
