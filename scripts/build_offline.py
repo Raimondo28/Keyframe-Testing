@@ -6,9 +6,11 @@ import json
 import re
 import subprocess
 import tempfile
+from xml.etree import ElementTree
 
 ROOT = Path(__file__).resolve().parents[1]
 MODULES = ('imagery.js', 'model.js', 'scenarios.js', 'airport-map.js', 'app.js')
+BRAND_ASSETS = ('assets/keyframe-logo.svg', 'assets/keyframe-mark.svg')
 EXCEL_REQUEST = "const r=await fetch('/api/import-excel',{method:'POST',body:file});const result=await r.json();if(!r.ok)throw Error(result.error);rows=result.rows;"
 
 
@@ -16,6 +18,15 @@ def replace_once(source: str, old: str, new: str) -> str:
     if source.count(old) != 1:
         raise ValueError(f'Expected one source fragment: {old[:70]!r}')
     return source.replace(old, new, 1)
+
+
+def svg_data_uri(path: Path) -> str:
+    """Embed a local SVG without depending on its location beside the HTML."""
+    image = path.read_bytes()
+    root = ElementTree.fromstring(image)
+    if root.tag.rsplit('}', 1)[-1] != 'svg':
+        raise ValueError(f'The brand asset is not an SVG image: {path.name}')
+    return 'data:image/svg+xml;base64,' + base64.b64encode(image).decode('ascii')
 
 
 def inline_module(source: str) -> str:
@@ -42,12 +53,23 @@ def check_javascript(source: str) -> None:
 
 def build() -> Path:
     css = (ROOT / 'src/style.css').read_text(encoding='utf-8')
+    brand_uris = {
+        relative:svg_data_uri(ROOT / relative)
+        for relative in BRAND_ASSETS
+        if (ROOT / relative).is_file()
+    }
+    favicon = brand_uris.get('assets/keyframe-mark.svg', 'data:,')
     image_path = ROOT / 'assets/westport-satellite.jpg'
     cached_image = image_path.is_file()
     modules = []
     for name in MODULES:
         source = (ROOT / 'src' / name).read_text(encoding='utf-8')
         if name == 'app.js':
+            for relative in BRAND_ASSETS:
+                if relative in source and relative not in brand_uris:
+                    raise FileNotFoundError(f'The standalone demo references a missing brand asset: {relative}')
+            for relative, uri in brand_uris.items():
+                source = source.replace(relative, uri)
             source = replace_once(
                 source,
                 EXCEL_REQUEST,
@@ -84,7 +106,7 @@ def build() -> Path:
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
         f'<meta name="description" content="{description}">'
         '<title>Keyframe · Westport spatial coordination demo</title>'
-        '<link rel="icon" href="data:,">\n<style>' + css + '</style>\n'
+        f'<link rel="icon" type="image/svg+xml" href="{favicon}">\n<style>' + css + '</style>\n'
         '</head><body><div id="app"></div><div id="toast" role="status"></div>\n'
         '<script>\n' + js + '\n</script></body></html>\n'
     )

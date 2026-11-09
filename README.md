@@ -2,6 +2,8 @@
 
 Westport (Perth/Kwinana) is the default example. Brisbane Airport remains available in the project selector. Both are concept demonstrations, separate from live Keyframe projects.
 
+The interface uses a compact Keyframe header and working canvas, without the promotional title or introductory banner. Brand SVGs in `assets/` recreate the supplied logo reference; an approved master SVG can replace them directly for exact production artwork. They are embedded in the standalone HTML.
+
 ## Open the demonstration
 
 Download the `westport-demo` branch as a ZIP, extract it and double-click **OPEN-DEMO.html**. No installation is needed for drawing footprints, CSV import, playback, clash checking or workspace export. Excel `.xlsx` import uses the Python server described below.
